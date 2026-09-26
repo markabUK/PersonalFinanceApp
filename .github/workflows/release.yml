@@ -66,14 +66,19 @@ jobs:
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force -Path ./artifact_folder
-          Move-Item -Path "./publish/PersonalFinanceApp.Desktop${{ matrix.runtime.extension }}" -Destination "./artifact_folder/PersonalFinanceApp-${{ matrix.runtime.id }}{{ matrix.runtime.extension }}"
+          $ext = "${{ matrix.runtime.extension }}"
+          $id = "${{ matrix.runtime.id }}"
+          Move-Item -Path "./publish/PersonalFinanceApp.Desktop$ext" -Destination "./artifact_folder/PersonalFinanceApp-$id$ext"
 
       - name: Prepare Artifact Folder (Unix)
         if: runner.os != 'Windows'
         shell: bash
+        env:
+          EXT: ${{ matrix.runtime.extension }}
+          RID: ${{ matrix.runtime.id }}
         run: |
           mkdir -p ./artifact_folder
-          mv ./publish/PersonalFinanceApp.Desktop${{ matrix.runtime.extension }} ./artifact_folder/PersonalFinanceApp-${{ matrix.runtime.id }}{{ matrix.runtime.extension }}
+          mv "./publish/PersonalFinanceApp.Desktop${EXT}" "./artifact_folder/PersonalFinanceApp-${RID}${EXT}"
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4

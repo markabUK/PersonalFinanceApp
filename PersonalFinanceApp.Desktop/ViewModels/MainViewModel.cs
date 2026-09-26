@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -40,12 +41,6 @@ public partial class MainViewModel : ObservableObject
     private decimal _payInXExpenses;
 
     [ObservableProperty]
-    private double _incomeBarWidth = 150;
-
-    [ObservableProperty]
-    private double _expenseBarWidth = 150;
-
-    [ObservableProperty]
     private string _currentMonthDisplay = string.Empty;
 
     [ObservableProperty]
@@ -53,6 +48,7 @@ public partial class MainViewModel : ObservableObject
 
     public ObservableCollection<Account> Accounts { get; } = new();
     public ObservableCollection<TransactionItem> FilteredTransactions { get; } = new();
+    public ObservableCollection<CategoryBreakdownItem> CategoryBreakdowns { get; } = new();
 
     public MainViewModel(AppState state)
     {
@@ -120,6 +116,7 @@ public partial class MainViewModel : ObservableObject
             ActiveAccount = null;
             ActiveViewTitle = "No Accounts Configured";
             FilteredTransactions.Clear();
+            CategoryBreakdowns.Clear();
             DisplayedBalance = 0;
             ProjectedEndBalance = 0;
             PeriodIncome = 0;
@@ -135,6 +132,7 @@ public partial class MainViewModel : ObservableObject
 
         var (startDate, endDate) = GetCurrentPayPeriodDates();
         FilteredTransactions.Clear();
+        CategoryBreakdowns.Clear();
 
         if (ActiveAccount.Type == AccountType.Current)
         {
@@ -151,23 +149,13 @@ public partial class MainViewModel : ObservableObject
             OneOffExpenses = FilteredTransactions.Where(t => t.Recurrence == RecurrenceUnit.OneTime && t.Type != TransactionType.Income).Sum(t => t.Amount);
             PayInXExpenses = FilteredTransactions.Where(t => t.Type == TransactionType.PayInX).Sum(t => t.Amount);
 
-            decimal totalFlow = PeriodIncome + PeriodExpenses;
-            if (totalFlow > 0)
-            {
-                IncomeBarWidth = (double)(PeriodIncome / totalFlow) * 300;
-                ExpenseBarWidth = (double)(PeriodExpenses / totalFlow) * 300;
-            }
-            else
-            {
-                IncomeBarWidth = 150;
-                ExpenseBarWidth = 150;
-            }
+            PopulateCategoryBreakdowns(FilteredTransactions.Where(t => t.Type != TransactionType.Income).ToList(), PeriodExpenses);
 
             ProjectedEndBalance = FinanceForecaster.CalculateProjectedBalance(DisplayedBalance, FilteredTransactions, startDate, endDate);
         }
         else
         {
-            var matching = ActiveAccount.Transactions.Where(t => t.EffectiveFromDate >= startDate && t.EffectiveFromDate <= endDate);
+            var matching = ActiveAccount.Transactions.Where(t => t.EffectiveFromDate >= startDate && t.EffectiveFromDate <= endDate).ToList();
             foreach (var item in matching)
             {
                 FilteredTransactions.Add(item);
@@ -177,11 +165,39 @@ public partial class MainViewModel : ObservableObject
             PeriodExpenses = matching.Where(t => t.Type != TransactionType.Income).Sum(t => t.Amount);
             OneOffExpenses = matching.Where(t => t.Recurrence == RecurrenceUnit.OneTime && t.Type != TransactionType.Income).Sum(t => t.Amount);
             PayInXExpenses = matching.Where(t => t.Type == TransactionType.PayInX).Sum(t => t.Amount);
-            IncomeBarWidth = 150;
-            ExpenseBarWidth = 150;
+
+            PopulateCategoryBreakdowns(matching.Where(t => t.Type != TransactionType.Income).ToList(), PeriodExpenses);
 
             DisplayedBalance = ActiveAccount.Transactions.Sum(t => t.Type == TransactionType.Income ? t.Amount : -t.Amount);
             ProjectedEndBalance = DisplayedBalance;
+        }
+    }
+
+    private void PopulateCategoryBreakdowns(List<TransactionItem> expenses, decimal totalExpenses)
+    {
+        string[] palette = { "#FF4500", "#FF8C00", "#DA70D6", "#4169E1", "#00FFFF", "#32CD32", "#FF69B4" };
+        int colorIndex = 0;
+
+        var grouped = expenses
+            .GroupBy(t => t.Category)
+            .Select(g => new
+            {
+                Name = g.Key,
+                Amount = g.Sum(x => x.Amount)
+            })
+            .OrderByDescending(x => x.Amount);
+
+        foreach (var item in grouped)
+        {
+            double percentage = totalExpenses > 0 ? (double)(item.Amount / totalExpenses) * 100 : 0;
+            CategoryBreakdowns.Add(new CategoryBreakdownItem
+            {
+                Name = item.Name,
+                Amount = item.Amount,
+                Percentage = Math.Round(percentage, 1),
+                ColorHex = palette[colorIndex % palette.Length]
+            });
+            colorIndex++;
         }
     }
 
@@ -239,6 +255,20 @@ public partial class MainViewModel : ObservableObject
 
     public void UpdateTransaction(TransactionItem item)
     {
+        if (ActiveAccount == null) return;
+
+        var existing = ActiveAccount.Transactions.FirstOrDefault(t => t.Id == item.Id);
+        if (existing != null)
+        {
+            existing.Title = item.Title;
+            existing.Amount = item.Amount;
+            existing.Type = item.Type;
+            existing.Recurrence = item.Recurrence;
+            existing.Interval = item.Interval;
+            existing.EffectiveFromDate = item.EffectiveFromDate;
+            existing.EffectiveToDate = item.EffectiveToDate;
+        }
+
         StorageService.SaveState(_state);
         RefreshActiveView();
     }

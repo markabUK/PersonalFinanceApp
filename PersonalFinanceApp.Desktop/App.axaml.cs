@@ -19,7 +19,6 @@ public partial class App : Application
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
             var state = StorageService.LoadState();
-
             desktop.MainWindow = new MainWindow
             {
                 DataContext = new MainViewModel(state)

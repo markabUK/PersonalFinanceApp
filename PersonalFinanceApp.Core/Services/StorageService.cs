@@ -44,14 +44,13 @@ public class StorageService
                     db.SaveChanges();
                 }
 
-                // Move legacy file to a backup so it doesn't re-import on subsequent boots
                 string backupPath = Path.Combine(folder, "app_state.json.bak");
                 if (File.Exists(backupPath)) File.Delete(backupPath);
                 File.Move(jsonPath, backupPath);
             }
             catch
             {
-                // Fallback gracefully if migration encounters malformed data
+                // Fallback gracefully if migration fails
             }
         }
 
@@ -72,64 +71,87 @@ public class StorageService
     {
         using var db = new FinanceDbContext();
         db.Database.EnsureCreated();
-        
+
+        // Load existing database state to identify deletions
+        var existingAccountIds = db.Accounts.Select(a => a.Id).ToList();
+        var incomingAccountIds = state.Accounts.Select(a => a.Id).ToList();
+
+        // 1. Remove accounts deleted in UI
+        var accountsToRemove = db.Accounts.Where(a => !incomingAccountIds.Contains(a.Id)).ToList();
+        if (accountsToRemove.Any())
+        {
+            db.Accounts.RemoveRange(accountsToRemove);
+        }
+
+        // 2. Synchronize each account using EntityState tracking
         foreach (var account in state.Accounts)
         {
-            var existingAcc = db.Accounts
+            if (account.Id == Guid.Empty) account.Id = Guid.NewGuid();
+
+            var dbAccount = db.Accounts
                 .Include(a => a.Transactions)
                     .ThenInclude(t => t.OverrideEntities)
                 .FirstOrDefault(a => a.Id == account.Id);
 
-            if (existingAcc == null)
+            if (dbAccount == null)
             {
+                // New Account
                 db.Accounts.Add(account);
             }
             else
             {
-                existingAcc.Name = account.Name;
-                existingAcc.Type = account.Type;
-                existingAcc.StartingBalance = account.StartingBalance;
-                existingAcc.StartingBalanceDate = account.StartingBalanceDate;
-                existingAcc.PayCycleStartDay = account.PayCycleStartDay;
+                // Update Account metadata
+                dbAccount.Name = account.Name;
+                dbAccount.Type = account.Type;
+                dbAccount.StartingBalance = account.StartingBalance;
+                dbAccount.StartingBalanceDate = account.StartingBalanceDate;
+                dbAccount.PayCycleStartDay = account.PayCycleStartDay;
 
                 var incomingTxIds = account.Transactions.Select(t => t.Id).ToList();
-                var toRemove = existingAcc.Transactions.Where(t => !incomingTxIds.Contains(t.Id)).ToList();
-                db.Transactions.RemoveRange(toRemove);
 
+                // Remove deleted transactions for this account
+                var txsToRemove = dbAccount.Transactions.Where(t => !incomingTxIds.Contains(t.Id)).ToList();
+                if (txsToRemove.Any())
+                {
+                    db.Transactions.RemoveRange(txsToRemove);
+                }
+
+                // Update or Add transactions
                 foreach (var tx in account.Transactions)
                 {
-                    var existingTx = existingAcc.Transactions.FirstOrDefault(t => t.Id == tx.Id);
-                    if (existingTx == null)
+                    if (tx.Id == Guid.Empty) tx.Id = Guid.NewGuid();
+                    tx.AccountId = dbAccount.Id;
+
+                    var dbTx = dbAccount.Transactions.FirstOrDefault(t => t.Id == tx.Id);
+
+                    if (dbTx == null)
                     {
-                        tx.AccountId = account.Id;
-                        existingAcc.Transactions.Add(tx);
+                        // New Transaction
+                        db.Transactions.Add(tx);
                     }
                     else
                     {
-                        existingTx.Title = tx.Title;
-                        existingTx.Amount = tx.Amount;
-                        existingTx.EffectiveFromDate = tx.EffectiveFromDate;
-                        existingTx.EffectiveToDate = tx.EffectiveToDate;
-                        existingTx.Type = tx.Type;
-                        existingTx.Recurrence = tx.Recurrence;
-                        existingTx.Interval = tx.Interval;
+                        // Update Existing Transaction
+                        dbTx.Title = tx.Title;
+                        dbTx.Amount = tx.Amount;
+                        dbTx.EffectiveFromDate = tx.EffectiveFromDate;
+                        dbTx.EffectiveToDate = tx.EffectiveToDate;
+                        dbTx.Type = tx.Type;
+                        dbTx.Recurrence = tx.Recurrence;
+                        dbTx.Interval = tx.Interval;
 
-                        db.TransactionOverrides.RemoveRange(existingTx.OverrideEntities);
-                        existingTx.OverrideEntities = tx.OverrideEntities.Select(o => new TransactionOverride
+                        // Reconcile Overrides safely
+                        db.TransactionOverrides.RemoveRange(dbTx.OverrideEntities);
+                        foreach (var ov in tx.OverrideEntities)
                         {
-                            Id = o.Id,
-                            TransactionItemId = existingTx.Id,
-                            MonthKey = o.MonthKey,
-                            Amount = o.Amount
-                        }).ToList();
+                            if (ov.Id == Guid.Empty) ov.Id = Guid.NewGuid();
+                            ov.TransactionItemId = dbTx.Id;
+                            db.TransactionOverrides.Add(ov);
+                        }
                     }
                 }
             }
         }
-
-        var incomingAccIds = state.Accounts.Select(a => a.Id).ToList();
-        var accountsToRemove = db.Accounts.Where(a => !incomingAccIds.Contains(a.Id)).ToList();
-        db.Accounts.RemoveRange(accountsToRemove);
 
         db.SaveChanges();
     }

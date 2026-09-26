@@ -3,7 +3,7 @@
         xmlns:vm="using:PersonalFinanceApp.Desktop.ViewModels"
         x:Class="PersonalFinanceApp.Desktop.Views.MainWindow"
         x:DataType="vm:MainViewModel"
-        Title="UK Multi-Account Financial Command Center" Width="1250" Height="750"
+        Title="UK Multi-Account Financial Command Center" Width="1250" Height="780"
         Background="#0F0C1B" Foreground="White" WindowStartupLocation="CenterScreen">
 
     <Grid ColumnDefinitions="70, *" Background="#0F0C1B">
@@ -54,36 +54,59 @@
                     <Grid RowDefinitions="Auto, Auto, *, Auto, Auto" RowSpacing="10">
                         <TextBlock Grid.Row="0" Text="Transactions &amp; Direct Debits for Period" FontWeight="Bold" FontSize="15"/>
                         
-                        <!-- Visual Cash Flow Breakdown Panel -->
-                        <Border Grid.Row="1" Background="#16102B" CornerRadius="6" Padding="10">
-                            <Grid ColumnDefinitions="*, *, *, *" RowDefinitions="Auto, Auto">
-                                <StackPanel Grid.Column="0" Grid.Row="0" Orientation="Horizontal" Spacing="4">
-                                    <TextBlock Text="🟢 In:" Foreground="#A095C2" FontSize="11" VerticalAlignment="Center"/>
-                                    <TextBlock Text="{Binding PeriodIncome, StringFormat={}{0:C}}" Foreground="#00FF7F" FontWeight="Bold" FontSize="11" VerticalAlignment="Center"/>
-                                </StackPanel>
-                                <StackPanel Grid.Column="1" Grid.Row="0" Orientation="Horizontal" Spacing="4">
-                                    <TextBlock Text="🟠 One-off:" Foreground="#A095C2" FontSize="11" VerticalAlignment="Center"/>
-                                    <TextBlock Text="{Binding OneOffExpenses, StringFormat={}{0:C}}" Foreground="#FF8C00" FontWeight="Bold" FontSize="11" VerticalAlignment="Center"/>
-                                </StackPanel>
-                                <StackPanel Grid.Column="2" Grid.Row="0" Orientation="Horizontal" Spacing="4">
-                                    <TextBlock Text="🟣 PayX:" Foreground="#A095C2" FontSize="11" VerticalAlignment="Center"/>
-                                    <TextBlock Text="{Binding PayInXExpenses, StringFormat={}{0:C}}" Foreground="#DA70D6" FontWeight="Bold" FontSize="11" VerticalAlignment="Center"/>
-                                </StackPanel>
-                                <StackPanel Grid.Column="3" Grid.Row="0" Orientation="Horizontal" Spacing="4" HorizontalAlignment="Right">
-                                    <TextBlock Text="🔴 Out:" Foreground="#A095C2" FontSize="11" VerticalAlignment="Center"/>
-                                    <TextBlock Text="{Binding PeriodExpenses, StringFormat={}{0:C}}" Foreground="#FF4500" FontWeight="Bold" FontSize="11" VerticalAlignment="Center"/>
-                                </StackPanel>
+                        <!-- Custom Category Breakdown Widget -->
+                        <Border Grid.Row="1" Background="#16102B" CornerRadius="6" Padding="10" Height="150">
+                            <Grid RowDefinitions="Auto, *">
+                                <Grid Grid.Row="0" ColumnDefinitions="*, *, *, *">
+                                    <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="4">
+                                        <TextBlock Text="🟢 In:" Foreground="#A095C2" FontSize="11"/>
+                                        <TextBlock Text="{Binding PeriodIncome, StringFormat={}{0:C}}" Foreground="#00FF7F" FontWeight="Bold" FontSize="11"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4">
+                                        <TextBlock Text="🟠 One-off:" Foreground="#A095C2" FontSize="11"/>
+                                        <TextBlock Text="{Binding OneOffExpenses, StringFormat={}{0:C}}" Foreground="#FF8C00" FontWeight="Bold" FontSize="11"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="4">
+                                        <TextBlock Text="🟣 PayX:" Foreground="#A095C2" FontSize="11"/>
+                                        <TextBlock Text="{Binding PayInXExpenses, StringFormat={}{0:C}}" Foreground="#DA70D6" FontWeight="Bold" FontSize="11"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="4" HorizontalAlignment="Right">
+                                        <TextBlock Text="🔴 Out:" Foreground="#A095C2" FontSize="11"/>
+                                        <TextBlock Text="{Binding PeriodExpenses, StringFormat={}{0:C}}" Foreground="#FF4500" FontWeight="Bold" FontSize="11"/>
+                                    </StackPanel>
+                                </Grid>
 
-                                <!-- Proportional Breakdown Bar -->
-                                <StackPanel Grid.Column="0" Grid.ColumnSpan="4" Grid.Row="1" Orientation="Horizontal" Height="8" Margin="0,8,0,2">
-                                    <Border Background="#00FF7F" Width="{Binding IncomeBarWidth}" CornerRadius="4,0,0,4"/>
-                                    <Border Background="#FF4500" Width="{Binding ExpenseBarWidth}" CornerRadius="0,4,4,0"/>
-                                </StackPanel>
+                                <!-- Scrollable Breakdown Category List -->
+                                <ScrollViewer Grid.Row="1" Margin="0,8,0,0" VerticalScrollBarVisibility="Auto">
+                                    <ItemsControl ItemsSource="{Binding CategoryBreakdowns}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Grid ColumnDefinitions="140, *, 80, 50" Margin="0,3">
+                                                    <TextBlock Grid.Column="0" Text="{Binding Name}" FontSize="11" Foreground="White" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
+                                                    
+                                                    <!-- Proportional Dynamic Star-Sized Bar -->
+                                                    <Border Grid.Column="1" Background="#251A45" Height="8" CornerRadius="4" Margin="8,0" VerticalAlignment="Center" ClipToBounds="True">
+                                                        <Grid>
+                                                            <Grid.ColumnDefinitions>
+                                                                <ColumnDefinition Width="{Binding Percentage, Converter={StaticResource DoubleToGridLengthConverter}}"/>
+                                                                <ColumnDefinition Width="{Binding RemainingPercentage, Converter={StaticResource DoubleToGridLengthConverter}}"/>
+                                                            </Grid.ColumnDefinitions>
+                                                            <Border Grid.Column="0" Background="{Binding ColorHex}" CornerRadius="4"/>
+                                                        </Grid>
+                                                    </Border>
+                                                    
+                                                    <TextBlock Grid.Column="2" Text="{Binding Amount, StringFormat={}{0:C}}" FontSize="11" Foreground="#A095C2" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                                                    <TextBlock Grid.Column="3" Text="{Binding Percentage, StringFormat={}{0}%}" FontSize="11" Foreground="#00FFFF" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                                                </Grid>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </ScrollViewer>
                             </Grid>
                         </Border>
 
                         <!-- Explicit Columns DataGrid with Category Column -->
-                        <DataGrid x:Name="TransactionsGrid" Grid.Row="2" ItemsSource="{Binding FilteredTransactions}" AutoGenerateColumns="False" Height="360" IsReadOnly="True">
+                        <DataGrid x:Name="TransactionsGrid" Grid.Row="2" ItemsSource="{Binding FilteredTransactions}" AutoGenerateColumns="False" Height="280" IsReadOnly="True">
                             <DataGrid.Columns>
                                 <DataGridTextColumn Header="Title" Binding="{Binding Title}" Width="*"/>
                                 <DataGridTextColumn Header="Category" Binding="{Binding Category}" Width="110"/>

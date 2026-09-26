@@ -7,48 +7,86 @@ namespace PersonalFinanceApp.Desktop.Views;
 
 public partial class EditTransactionWindow : Window
 {
-    private readonly TransactionItem? _item;
-    private readonly DateTime? _instanceDate;
-    public bool IsDeleted { get; private set; } = false;
+    private readonly TransactionItem? _transaction;
+    public bool IsDeleted { get; private set; }
 
     public EditTransactionWindow()
     {
         InitializeComponent();
     }
 
-    public EditTransactionWindow(TransactionItem item, DateTime? instanceDate = null) : this()
+    public EditTransactionWindow(TransactionItem transaction, DateTime currentPeriodDate) : this()
     {
-        _item = item;
-        _instanceDate = instanceDate;
+        _transaction = transaction;
 
-        TitleBox.Text = _item.Title;
-        EffectiveFromDatePicker.SelectedDate = new DateTimeOffset(_item.EffectiveFromDate);
-        if (_item.EffectiveToDate.HasValue)
+        // Populate dropdowns using your actual control names (e.g., TypeCombo, RecurrenceCombo)
+        if (this.FindControl<ComboBox>("TypeCombo") is { } typeCombo)
         {
-            EffectiveToDatePicker.SelectedDate = new DateTimeOffset(_item.EffectiveToDate.Value);
+            typeCombo.ItemsSource = Enum.GetNames(typeof(TransactionType));
+            typeCombo.SelectedItem = _transaction.Type.ToString();
         }
 
-        if (_instanceDate.HasValue && _item.Recurrence != RecurrenceUnit.OneTime)
+        if (this.FindControl<ComboBox>("RecurrenceCombo") is { } recCombo)
         {
-            string monthKey = _instanceDate.Value.ToString("yyyy-MM");
-            OverrideTargetText.Text = $"Target Month: {_instanceDate.Value:MMMM yyyy}";
+            recCombo.ItemsSource = Enum.GetNames(typeof(RecurrenceUnit));
+            recCombo.SelectedItem = _transaction.Recurrence.ToString();
+        }
 
-            if (_item.MonthlyAmountOverrides.TryGetValue(monthKey, out var overriddenVal))
-            {
-                AmountBox.Text = overriddenVal.ToString();
-                OverrideCheckBox.IsChecked = true;
-            }
-            else
-            {
-                AmountBox.Text = _item.Amount.ToString();
-            }
-        }
-        else
-        {
-            AmountBox.Text = _item.Amount.ToString();
-            OverrideCheckBox.IsVisible = false;
-            OverrideTargetText.IsVisible = false;
-        }
+        if (this.FindControl<TextBox>("TitleBox") is { } titleBox)
+            titleBox.Text = _transaction.Title;
+
+        string monthKey = currentPeriodDate.ToString("yyyy-MM");
+        decimal effectiveAmount = _transaction.MonthlyAmountOverrides.TryGetValue(monthKey, out var overridden) 
+            ? overridden 
+            : _transaction.Amount;
+
+        if (this.FindControl<TextBox>("AmountBox") is { } amountBox)
+            amountBox.Text = effectiveAmount.ToString("0.00");
+
+        if (this.FindControl<TextBox>("IntervalBox") is { } intervalBox)
+            intervalBox.Text = _transaction.Interval.ToString();
+
+        if (this.FindControl<DatePicker>("EffectiveFromDatePicker") is { } fromPicker)
+            fromPicker.SelectedDate = new DateTimeOffset(_transaction.EffectiveFromDate);
+
+        if (this.FindControl<DatePicker>("EffectiveToDatePicker") is { } toPicker)
+            toPicker.SelectedDate = _transaction.EffectiveToDate.HasValue ? new DateTimeOffset(_transaction.EffectiveToDate.Value) : null;
+    }
+
+    private void OnSaveClicked(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    {
+        if (_transaction == null) return;
+
+        var titleBox = this.FindControl<TextBox>("TitleBox");
+        var amountBox = this.FindControl<TextBox>("AmountBox");
+        var typeCombo = this.FindControl<ComboBox>("TypeCombo");
+        var recCombo = this.FindControl<ComboBox>("RecurrenceCombo");
+        var intervalBox = this.FindControl<TextBox>("IntervalBox");
+        var fromPicker = this.FindControl<DatePicker>("EffectiveFromDatePicker");
+        var toPicker = this.FindControl<DatePicker>("EffectiveToDatePicker");
+
+        if (string.IsNullOrWhiteSpace(titleBox?.Text) || !decimal.TryParse(amountBox?.Text, out var amount))
+            return;
+
+        Enum.TryParse<TransactionType>(typeCombo?.SelectedItem?.ToString(), out var type);
+        Enum.TryParse<RecurrenceUnit>(recCombo?.SelectedItem?.ToString(), out var recurrence);
+        int.TryParse(intervalBox?.Text, out var interval);
+
+        _transaction.Title = titleBox.Text.Trim();
+        _transaction.Amount = amount;
+        _transaction.Type = type;
+        _transaction.Recurrence = recurrence;
+        _transaction.Interval = Math.Max(1, interval);
+        _transaction.EffectiveFromDate = fromPicker?.SelectedDate?.DateTime ?? _transaction.EffectiveFromDate;
+        _transaction.EffectiveToDate = toPicker?.SelectedDate?.DateTime;
+
+        Close();
+    }
+
+    private void OnDeleteClicked(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    {
+        IsDeleted = true;
+        Close();
     }
 
     private void OnCurrencyTextChanged(object? sender, TextChangedEventArgs e)
@@ -72,37 +110,5 @@ public partial class EditTransactionWindow : Window
                 textBox.CaretIndex = filtered.Length;
             }
         }
-    }
-
-    private void OnSaveClicked(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
-    {
-        if (_item != null && decimal.TryParse(AmountBox.Text, out var amount))
-        {
-            _item.Title = TitleBox.Text ?? string.Empty;
-            _item.EffectiveFromDate = EffectiveFromDatePicker.SelectedDate?.DateTime ?? _item.EffectiveFromDate;
-            _item.EffectiveToDate = EffectiveToDatePicker.SelectedDate?.DateTime;
-
-            if (_instanceDate.HasValue && _item.Recurrence != RecurrenceUnit.OneTime && (OverrideCheckBox.IsChecked == true))
-            {
-                string monthKey = _instanceDate.Value.ToString("yyyy-MM");
-                _item.MonthlyAmountOverrides[monthKey] = amount;
-            }
-            else
-            {
-                _item.Amount = amount;
-                if (_instanceDate.HasValue)
-                {
-                    string monthKey = _instanceDate.Value.ToString("yyyy-MM");
-                    _item.MonthlyAmountOverrides.Remove(monthKey);
-                }
-            }
-        }
-        Close();
-    }
-
-    private void OnDeleteClicked(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
-    {
-        IsDeleted = true;
-        Close();
     }
 }

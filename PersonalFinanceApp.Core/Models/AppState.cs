@@ -1,3 +1,6 @@
+using System;
+using System.Collections.Generic;
+
 namespace PersonalFinanceApp.Core.Models;
 
 public class AppState

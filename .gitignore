@@ -1,1 +1,5 @@
 .idea/
+PersonalFinanceApp.Desktop/bin
+PersonalFinanceApp.Core/bin
+PersonalFinanceApp.Core/obj
+PersonalFinanceApp.Desktop/obj

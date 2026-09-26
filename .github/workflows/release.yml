@@ -43,7 +43,13 @@ jobs:
       - name: Restore Dependencies
         run: dotnet restore PersonalFinanceApp.Desktop/PersonalFinanceApp.Desktop.csproj
 
-      - name: Publish Self-Contained Single File
+      - name: Publish Self-Contained Single File (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          dotnet publish PersonalFinanceApp.Desktop/PersonalFinanceApp.Desktop.csproj -c Release -r ${{ matrix.runtime.id }} --self-contained true -p:PublishSingleFile=true -p:PublishReadyToRun=true -p:IncludeNativeLibrariesForSelfExtract=true -p:PublishTrimmed=false -o ./publish
+
+      - name: Publish Self-Contained Single File (Unix)
+        if: runner.os != 'Windows'
         run: |
           dotnet publish PersonalFinanceApp.Desktop/PersonalFinanceApp.Desktop.csproj \
             -c Release \
@@ -55,12 +61,19 @@ jobs:
             -p:PublishTrimmed=false \
             -o ./publish
 
-      - name: Prepare Archive / Artifact Name
+      - name: Prepare Artifact Folder (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path ./artifact_folder
+          Move-Item -Path "./publish/PersonalFinanceApp.Desktop${{ matrix.runtime.extension }}" -Destination "./artifact_folder/PersonalFinanceApp-${{ matrix.runtime.id }}{{ matrix.runtime.extension }}"
+
+      - name: Prepare Artifact Folder (Unix)
+        if: runner.os != 'Windows'
         shell: bash
         run: |
-          # Rename and structure the binary for archiving
           mkdir -p ./artifact_folder
-          mv ./publish/PersonalFinanceApp.Desktop${{ matrix.runtime.extension }} ./artifact_folder/PersonalFinanceApp-${{ matrix.runtime.id }}${{ matrix.runtime.extension }}
+          mv ./publish/PersonalFinanceApp.Desktop${{ matrix.runtime.extension }} ./artifact_folder/PersonalFinanceApp-${{ matrix.runtime.id }}{{ matrix.runtime.extension }}
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
@@ -79,9 +92,6 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           path: ./all-artifacts
-
-      - name: Display Downloaded Artifacts Structure
-        run: ls -R ./all-artifacts
 
       - name: Create GitHub Release and Upload Assets
         uses: softprops/action-gh-release@v2

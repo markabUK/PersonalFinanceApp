@@ -6,6 +6,8 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using PersonalFinanceApp.Core.Models;
 using PersonalFinanceApp.Core.Services;
+using PersonalFinanceApp.Desktop.Services;
+using PersonalFinanceApp.Desktop.Views;
 
 namespace PersonalFinanceApp.Desktop.ViewModels;
 
@@ -301,6 +303,42 @@ public partial class MainViewModel : ObservableObject
             var start = new DateTime(_state.FilterYear, _state.FilterMonth, 1);
             var end = start.AddMonths(1).AddDays(-1);
             return (start, end);
+        }
+    }
+    
+    [RelayCommand]
+    private async System.Threading.Tasks.Task ExportForecastExcel()
+    {
+        if (ActiveAccount == null) return;
+
+        if (App.Current?.ApplicationLifetime is Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime desktop 
+            && desktop.MainWindow is { } mainWindow)
+        {
+            // Show the export month dialog
+            var dialog = new ExportDialog();
+            bool? result = await dialog.ShowDialog<bool?>(mainWindow);
+
+            if (result == true)
+            {
+                int monthsToExport = dialog.ForecastMonths;
+
+                var file = await mainWindow.StorageProvider.SaveFilePickerAsync(new Avalonia.Platform.Storage.FilePickerSaveOptions
+                {
+                    Title = "Export Budget Forecast",
+                    DefaultExtension = "xlsx",
+                    SuggestedFileName = $"{ActiveAccount.Name}_Forecast_{monthsToExport}M.xlsx",
+                    FileTypeChoices = new[]
+                    {
+                        new Avalonia.Platform.Storage.FilePickerFileType("Excel Spreadsheet") { Patterns = new[] { "*.xlsx" } }
+                    }
+                });
+
+                if (file != null)
+                {
+                    string path = file.Path.LocalPath;
+                    ExcelExportService.ExportForecastToExcel(ActiveAccount, monthsToExport, path);
+                }
+            }
         }
     }
 

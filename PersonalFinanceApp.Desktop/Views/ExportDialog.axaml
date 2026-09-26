@@ -1,0 +1,18 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="PersonalFinanceApp.Desktop.Views.ExportDialog"
+        Title="Export Budget Forecast" Width="360" Height="200"
+        Background="#0F0C1B" Foreground="White" WindowStartupLocation="CenterOwner">
+
+    <StackPanel Margin="20" Spacing="15">
+        <TextBlock Text="Export Forecast to Excel" FontSize="18" FontWeight="Bold" Foreground="#00FFFF"/>
+        <TextBlock Text="Enter the number of months to forecast forward:" Foreground="#A095C2" FontSize="12"/>
+
+        <TextBox x:Name="MonthsBox" Text="12" Height="32" Background="#251A45" Foreground="White"/>
+
+        <StackPanel Orientation="Horizontal" Spacing="10" HorizontalAlignment="Right">
+            <Button Content="Cancel" Click="OnCancelClicked" Background="#251A45" Foreground="White" Width="90" Height="32"/>
+            <Button Content="Export" Click="OnExportClicked" Background="#8A2BE2" Foreground="White" FontWeight="Bold" Width="90" Height="32"/>
+        </StackPanel>
+    </StackPanel>
+</Window>

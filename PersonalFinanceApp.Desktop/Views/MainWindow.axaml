@@ -51,11 +51,12 @@
             <!-- Workspace Grid (Visible only when an account is selected) -->
             <Grid Grid.Row="1" ColumnDefinitions="*, 340" ColumnSpacing="20" IsVisible="{Binding HasActiveAccount}">
                 <Border Grid.Column="0" Background="#251A45" CornerRadius="8" Padding="15">
-                    <Grid RowDefinitions="Auto, Auto, *, Auto, Auto" RowSpacing="10">
+                    <!-- Row 2 (*) and Row 4 (*) will now dynamically share and fill available vertical space -->
+                    <Grid RowDefinitions="Auto, 160, 10, *, Auto" RowSpacing="6">
                         <TextBlock Grid.Row="0" Text="Transactions &amp; Direct Debits for Period" FontWeight="Bold" FontSize="15"/>
                         
-                        <!-- Custom Category Breakdown Widget -->
-                        <Border Grid.Row="1" Background="#16102B" CornerRadius="6" Padding="10" Height="150">
+                        <!-- Custom Category Breakdown Widget (Fixed compact height for top section) -->
+                        <Border Grid.Row="1" Background="#16102B" CornerRadius="6" Padding="10">
                             <Grid RowDefinitions="Auto, *">
                                 <Grid Grid.Row="0" ColumnDefinitions="*, *, *, *">
                                     <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="4">
@@ -77,7 +78,7 @@
                                 </Grid>
 
                                 <!-- Scrollable Breakdown Category List -->
-                                <ScrollViewer Grid.Row="1" Margin="0,8,0,0" VerticalScrollBarVisibility="Auto">
+                                <ScrollViewer Grid.Row="1" Margin="0,6,0,0" VerticalScrollBarVisibility="Auto">
                                     <ItemsControl ItemsSource="{Binding CategoryBreakdowns}">
                                         <ItemsControl.ItemTemplate>
                                             <DataTemplate>
@@ -105,8 +106,8 @@
                             </Grid>
                         </Border>
 
-                        <!-- Explicit Columns DataGrid with Category Column -->
-                        <DataGrid x:Name="TransactionsGrid" Grid.Row="2" ItemsSource="{Binding FilteredTransactions}" AutoGenerateColumns="False" Height="280" IsReadOnly="True">
+                        <!-- Explicit Columns DataGrid (Removed hardcoded height so it expands dynamically to fill space) -->
+                        <DataGrid x:Name="TransactionsGrid" Grid.Row="3" ItemsSource="{Binding FilteredTransactions}" AutoGenerateColumns="False" IsReadOnly="True">
                             <DataGrid.Columns>
                                 <DataGridTextColumn Header="Title" Binding="{Binding Title}" Width="*"/>
                                 <DataGridTextColumn Header="Category" Binding="{Binding Category}" Width="110"/>
@@ -116,15 +117,17 @@
                             </DataGrid.Columns>
                         </DataGrid>
                         
-                        <Button Grid.Row="3" Content="Edit / View Selected Transaction Details" 
-                                Click="OnOpenEditTransaction" 
-                                Background="#FF8C00" Foreground="Black" FontWeight="Bold" HorizontalAlignment="Stretch" Height="36"/>
+                        <StackPanel Grid.Row="4" Spacing="6">
+                            <Button Content="Edit / View Selected Transaction Details" 
+                                    Click="OnOpenEditTransaction" 
+                                    Background="#FF8C00" Foreground="Black" FontWeight="Bold" HorizontalAlignment="Stretch" Height="36"/>
 
-                        <Button Grid.Row="4" Content="+ Add New Transaction" Click="OnOpenAddTransaction" 
-                                Background="#8A2BE2" Foreground="White" FontWeight="Bold" HorizontalAlignment="Stretch" Height="38"/>
+                            <Button Content="+ Add New Transaction" Click="OnOpenAddTransaction" 
+                                    Background="#8A2BE2" Foreground="White" FontWeight="Bold" HorizontalAlignment="Stretch" Height="38"/>
+                        </StackPanel>
                     </Grid>
                 </Border>
-
+                
                 <!-- Account Summary Panel -->
                 <Border Grid.Column="1" Background="#251A45" CornerRadius="8" Padding="15" VerticalAlignment="Top">
                     <StackPanel Spacing="15">
@@ -158,6 +161,11 @@
                                 Command="{Binding DeleteActiveAccountCommand}" 
                                 Background="#FF4500" Foreground="White" FontWeight="Bold" 
                                 HorizontalAlignment="Stretch" Height="36" Margin="0,0,0,0"/>
+                        
+                        <Button Content="Export Forecast to Excel (.xlsx)" 
+                                Command="{Binding ExportForecastExcelCommand}" 
+                                Background="#008080" Foreground="White" FontWeight="Bold" 
+                                HorizontalAlignment="Stretch" Height="36" Margin="0,5,0,0"/>
                     </StackPanel>
                 </Border>
             </Grid>

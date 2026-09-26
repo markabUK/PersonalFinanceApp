@@ -1,0 +1,38 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="PersonalFinanceApp.Desktop.Views.AccountWizardWindow"
+        Title="Account Setup Wizard" Width="420" Height="560"
+        Background="#0F0C1B" Foreground="White" WindowStartupLocation="CenterOwner">
+
+    <StackPanel Margin="20" Spacing="12">
+        <TextBlock Text="Configure Account" FontSize="20" FontWeight="Bold" Foreground="#00FF7F"/>
+        <TextBlock Text="Enter account details and baseline starting balance anchor date." TextWrapping="Wrap" Foreground="#A095C2" FontSize="12"/>
+
+        <StackPanel Spacing="3" Margin="0,5,0,0">
+            <TextBlock Text="Account Name (e.g. Main Bills, Savings):" Foreground="#A095C2" FontSize="12"/>
+            <TextBox x:Name="NameBox"/>
+        </StackPanel>
+
+        <StackPanel Spacing="3">
+            <TextBlock Text="Account Type:" Foreground="#A095C2" FontSize="12"/>
+            <ComboBox x:Name="TypeBox" HorizontalAlignment="Stretch"/>
+        </StackPanel>
+
+        <StackPanel Spacing="3">
+            <TextBlock Text="Starting Balance / Baseline (£):" Foreground="#A095C2" FontSize="12"/>
+            <TextBox x:Name="BalanceBox" Text="0.00"/>
+        </StackPanel>
+
+        <StackPanel Spacing="3">
+            <TextBlock Text="Starting Balance Date (Baseline Date):" Foreground="#A095C2" FontSize="12"/>
+            <DatePicker x:Name="BalanceDatePicker" HorizontalAlignment="Stretch"/>
+        </StackPanel>
+
+        <StackPanel Spacing="3">
+            <TextBlock Text="Pay Cycle Start Day (e.g., 26 for 26th of month):" Foreground="#A095C2" FontSize="12"/>
+            <TextBox x:Name="PayDayBox" Text="1"/>
+        </StackPanel>
+
+        <Button Content="Save Account" Click="OnSaveClicked" Background="#8A2BE2" Foreground="White" FontWeight="Bold" HorizontalAlignment="Stretch" Height="38" Margin="0,10,0,0"/>
+    </StackPanel>
+</Window>

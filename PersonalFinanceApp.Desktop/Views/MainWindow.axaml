@@ -1,0 +1,151 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:PersonalFinanceApp.Desktop.ViewModels"
+        x:Class="PersonalFinanceApp.Desktop.Views.MainWindow"
+        x:DataType="vm:MainViewModel"
+        Title="UK Multi-Account Financial Command Center" Width="1250" Height="750"
+        Background="#0F0C1B" Foreground="White" WindowStartupLocation="CenterScreen">
+
+    <Grid ColumnDefinitions="70, *" Background="#0F0C1B">
+        
+        <!-- Left Sidebar: Account Switcher & Add Account Button -->
+        <Border Grid.Column="0" Background="#16102B" BorderBrush="#251A45" BorderThickness="0,0,1,0">
+            <Grid RowDefinitions="*, Auto" Margin="0,15,0,15">
+                <ItemsControl Grid.Row="0" ItemsSource="{Binding Accounts}" HorizontalAlignment="Center">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Button Content="🏦" 
+                                    ToolTip.Tip="{Binding Name}"
+                                    Command="{Binding $parent[Window].((vm:MainViewModel)DataContext).SwitchAccountCommand}"
+                                    CommandParameter="{Binding}"
+                                    Width="45" Height="45" Background="#251A45" Foreground="#00FFFF" 
+                                    HorizontalContentAlignment="Center" VerticalContentAlignment="Center" CornerRadius="8" Margin="0,0,0,10"/>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <Button Grid.Row="1" Content="＋" ToolTip.Tip="Add New Account"
+                        Click="OnOpenAccountWizard"
+                        Width="45" Height="45" Background="#8A2BE2" Foreground="White" 
+                        HorizontalAlignment="Center" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" CornerRadius="8"/>
+            </Grid>
+        </Border>
+
+        <!-- Main Content Area -->
+        <Grid Grid.Column="1" RowDefinitions="Auto, *, Auto" Margin="20">
+            <Grid Grid.Row="0" ColumnDefinitions="*, Auto" Margin="0,0,0,15">
+                <StackPanel Grid.Column="0">
+                    <TextBlock Text="{Binding ActiveViewTitle}" FontSize="22" FontWeight="Bold" Foreground="#00FFFF"/>
+                    <TextBlock Text="Manage Transactions, Direct Debits &amp; Account Ledgers" FontSize="12" Foreground="#A095C2"/>
+                </StackPanel>
+
+                <!-- Month Filter Navigation with Today Button -->
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="10" VerticalAlignment="Center" IsVisible="{Binding HasActiveAccount}">
+                    <Button Content="&lt; Prev" Command="{Binding PreviousMonthCommand}" Background="#251A45" Foreground="White"/>
+                    <Button Content="Today" ToolTip.Tip="Reset to Current Month" Command="{Binding ResetToCurrentMonthCommand}" Background="#8A2BE2" Foreground="White" FontWeight="Bold"/>
+                    <TextBlock Text="{Binding CurrentMonthDisplay}" FontWeight="Bold" FontSize="16" VerticalAlignment="Center" Foreground="#00FF7F" Width="170" TextAlignment="Center"/>
+                    <Button Content="Next &gt;" Command="{Binding NextMonthCommand}" Background="#251A45" Foreground="White"/>
+                </StackPanel>
+            </Grid>
+
+            <!-- Workspace Grid (Visible only when an account is selected) -->
+            <Grid Grid.Row="1" ColumnDefinitions="*, 340" ColumnSpacing="20" IsVisible="{Binding HasActiveAccount}">
+                <Border Grid.Column="0" Background="#251A45" CornerRadius="8" Padding="15">
+                    <Grid RowDefinitions="Auto, Auto, *, Auto, Auto" RowSpacing="10">
+                        <TextBlock Grid.Row="0" Text="Transactions &amp; Direct Debits for Period" FontWeight="Bold" FontSize="15"/>
+                        
+                        <!-- Visual Cash Flow Breakdown Panel -->
+                        <Border Grid.Row="1" Background="#16102B" CornerRadius="6" Padding="10">
+                            <Grid ColumnDefinitions="*, *, *, *" RowDefinitions="Auto, Auto">
+                                <StackPanel Grid.Column="0" Grid.Row="0" Orientation="Horizontal" Spacing="4">
+                                    <TextBlock Text="🟢 In:" Foreground="#A095C2" FontSize="11" VerticalAlignment="Center"/>
+                                    <TextBlock Text="{Binding PeriodIncome, StringFormat={}{0:C}}" Foreground="#00FF7F" FontWeight="Bold" FontSize="11" VerticalAlignment="Center"/>
+                                </StackPanel>
+                                <StackPanel Grid.Column="1" Grid.Row="0" Orientation="Horizontal" Spacing="4">
+                                    <TextBlock Text="🟠 One-off:" Foreground="#A095C2" FontSize="11" VerticalAlignment="Center"/>
+                                    <TextBlock Text="{Binding OneOffExpenses, StringFormat={}{0:C}}" Foreground="#FF8C00" FontWeight="Bold" FontSize="11" VerticalAlignment="Center"/>
+                                </StackPanel>
+                                <StackPanel Grid.Column="2" Grid.Row="0" Orientation="Horizontal" Spacing="4">
+                                    <TextBlock Text="🟣 PayX:" Foreground="#A095C2" FontSize="11" VerticalAlignment="Center"/>
+                                    <TextBlock Text="{Binding PayInXExpenses, StringFormat={}{0:C}}" Foreground="#DA70D6" FontWeight="Bold" FontSize="11" VerticalAlignment="Center"/>
+                                </StackPanel>
+                                <StackPanel Grid.Column="3" Grid.Row="0" Orientation="Horizontal" Spacing="4" HorizontalAlignment="Right">
+                                    <TextBlock Text="🔴 Out:" Foreground="#A095C2" FontSize="11" VerticalAlignment="Center"/>
+                                    <TextBlock Text="{Binding PeriodExpenses, StringFormat={}{0:C}}" Foreground="#FF4500" FontWeight="Bold" FontSize="11" VerticalAlignment="Center"/>
+                                </StackPanel>
+
+                                <!-- Proportional Breakdown Bar -->
+                                <StackPanel Grid.Column="0" Grid.ColumnSpan="4" Grid.Row="1" Orientation="Horizontal" Height="8" Margin="0,8,0,2">
+                                    <Border Background="#00FF7F" Width="{Binding IncomeBarWidth}" CornerRadius="4,0,0,4"/>
+                                    <Border Background="#FF4500" Width="{Binding ExpenseBarWidth}" CornerRadius="0,4,4,0"/>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+
+                        <!-- Explicit Columns DataGrid with Category Column -->
+                        <DataGrid x:Name="TransactionsGrid" Grid.Row="2" ItemsSource="{Binding FilteredTransactions}" AutoGenerateColumns="False" Height="360" IsReadOnly="True">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Title" Binding="{Binding Title}" Width="*"/>
+                                <DataGridTextColumn Header="Category" Binding="{Binding Category}" Width="110"/>
+                                <DataGridTextColumn Header="Type" Binding="{Binding Type}" Width="90"/>
+                                <DataGridTextColumn Header="Amount (£)" Binding="{Binding Amount, StringFormat={}{0:C}}" Width="100"/>
+                                <DataGridTextColumn Header="Date" Binding="{Binding EffectiveFromDate, StringFormat={}{0:dd/MM/yyyy}}" Width="100"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                        
+                        <Button Grid.Row="3" Content="Edit / View Selected Transaction Details" 
+                                Click="OnOpenEditTransaction" 
+                                Background="#FF8C00" Foreground="Black" FontWeight="Bold" HorizontalAlignment="Stretch" Height="36"/>
+
+                        <Button Grid.Row="4" Content="+ Add New Transaction" Click="OnOpenAddTransaction" 
+                                Background="#8A2BE2" Foreground="White" FontWeight="Bold" HorizontalAlignment="Stretch" Height="38"/>
+                    </Grid>
+                </Border>
+
+                <!-- Account Summary Panel -->
+                <Border Grid.Column="1" Background="#251A45" CornerRadius="8" Padding="15" VerticalAlignment="Top">
+                    <StackPanel Spacing="15">
+                        <TextBlock Text="Account Summary" FontWeight="Bold" FontSize="16"/>
+                        
+                        <StackPanel Spacing="5">
+                            <TextBlock Text="Pay Cycle Start Day:" Foreground="#A095C2"/>
+                            <TextBlock Text="{Binding ActiveAccount.PayCycleStartDay, StringFormat={}{0}th of month}" FontSize="15" FontWeight="Bold" Foreground="White"/>
+                        </StackPanel>
+
+                        <StackPanel Spacing="5">
+                            <TextBlock Text="Account Balance / Baseline:" Foreground="#A095C2"/>
+                            <TextBlock Text="{Binding DisplayedBalance, StringFormat={}{0:C}}" FontSize="18" FontWeight="Bold" Foreground="White"/>
+                        </StackPanel>
+
+                        <StackPanel Spacing="5">
+                            <StackPanel Orientation="Horizontal" Spacing="4">
+                                <TextBlock Text="Projected Balance (" Foreground="#A095C2"/>
+                                <TextBlock Text="{Binding ProjectedEndDateDisplay}" Foreground="#00FF7F" FontWeight="Bold"/>
+                                <TextBlock Text="):" Foreground="#A095C2"/>
+                            </StackPanel>
+                            <TextBlock Text="{Binding ProjectedEndBalance, StringFormat={}{0:C}}" FontSize="22" FontWeight="Bold" Foreground="#00FF7F"/>
+                        </StackPanel>
+
+                        <Button Content="Edit Account Settings" 
+                                Click="OnOpenEditAccount" 
+                                Background="#4169E1" Foreground="White" FontWeight="Bold" 
+                                HorizontalAlignment="Stretch" Height="36" Margin="0,5,0,0"/>
+
+                        <Button Content="Delete Current Account" 
+                                Command="{Binding DeleteActiveAccountCommand}" 
+                                Background="#FF4500" Foreground="White" FontWeight="Bold" 
+                                HorizontalAlignment="Stretch" Height="36" Margin="0,0,0,0"/>
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+            <!-- Empty State Placeholder (Visible only when NO accounts exist) -->
+            <Border Grid.Row="1" Background="#251A45" CornerRadius="8" Padding="40" VerticalAlignment="Center" HorizontalAlignment="Center" IsVisible="{Binding !HasActiveAccount}">
+                <StackPanel Spacing="12" HorizontalAlignment="Center">
+                    <TextBlock Text="No Accounts Configured" FontSize="20" FontWeight="Bold" Foreground="#00FFFF" TextAlignment="Center"/>
+                    <TextBlock Text="Click the '＋' button in the sidebar to create your first Current or Savings account." Foreground="#A095C2" TextAlignment="Center" TextWrapping="Wrap" MaxWidth="350"/>
+                </StackPanel>
+            </Border>
+        </Grid>
+    </Grid>
+</Window>

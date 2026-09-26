@@ -1,0 +1,12 @@
+/home/mbrou/git/dotnet/PersonalFinanceApp/PersonalFinanceApp.Core/bin/Debug/net10.0/PersonalFinanceApp.Core.deps.json
+/home/mbrou/git/dotnet/PersonalFinanceApp/PersonalFinanceApp.Core/bin/Debug/net10.0/PersonalFinanceApp.Core.dll
+/home/mbrou/git/dotnet/PersonalFinanceApp/PersonalFinanceApp.Core/bin/Debug/net10.0/PersonalFinanceApp.Core.pdb
+/home/mbrou/git/dotnet/PersonalFinanceApp/PersonalFinanceApp.Core/obj/Debug/net10.0/PersonalFinanceApp.Core.csproj.AssemblyReference.cache
+/home/mbrou/git/dotnet/PersonalFinanceApp/PersonalFinanceApp.Core/obj/Debug/net10.0/PersonalFinanceApp.Core.GeneratedMSBuildEditorConfig.editorconfig
+/home/mbrou/git/dotnet/PersonalFinanceApp/PersonalFinanceApp.Core/obj/Debug/net10.0/PersonalFinanceApp.Core.AssemblyInfoInputs.cache
+/home/mbrou/git/dotnet/PersonalFinanceApp/PersonalFinanceApp.Core/obj/Debug/net10.0/PersonalFinanceApp.Core.AssemblyInfo.cs
+/home/mbrou/git/dotnet/PersonalFinanceApp/PersonalFinanceApp.Core/obj/Debug/net10.0/PersonalFinanceApp.Core.csproj.CoreCompileInputs.cache
+/home/mbrou/git/dotnet/PersonalFinanceApp/PersonalFinanceApp.Core/obj/Debug/net10.0/PersonalFinanceApp.Core.dll
+/home/mbrou/git/dotnet/PersonalFinanceApp/PersonalFinanceApp.Core/obj/Debug/net10.0/refint/PersonalFinanceApp.Core.dll
+/home/mbrou/git/dotnet/PersonalFinanceApp/PersonalFinanceApp.Core/obj/Debug/net10.0/PersonalFinanceApp.Core.pdb
+/home/mbrou/git/dotnet/PersonalFinanceApp/PersonalFinanceApp.Core/obj/Debug/net10.0/ref/PersonalFinanceApp.Core.dll

@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="PersonalFinanceApp.Core/PersonalFinanceApp.Core.csproj" />
+  <Project Path="PersonalFinanceApp.Desktop/PersonalFinanceApp.Desktop.csproj" />
+</Solution>

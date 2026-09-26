@@ -1,0 +1,42 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="PersonalFinanceApp.Desktop.Views.EditTransactionWindow"
+        Title="Transaction Details &amp; Management" Width="480" Height="620"
+        Background="#0F0C1B" Foreground="White" WindowStartupLocation="CenterOwner">
+
+    <StackPanel Margin="20" Spacing="12">
+        <TextBlock Text="Manage Transaction" FontSize="20" FontWeight="Bold" Foreground="#00FF7F"/>
+
+        <StackPanel Spacing="3">
+            <TextBlock Text="Title:" Foreground="#A095C2" FontSize="12"/>
+            <TextBox x:Name="TitleBox"/>
+        </StackPanel>
+
+        <StackPanel Spacing="3">
+            <TextBlock Text="Amount (£):" Foreground="#A095C2" FontSize="12"/>
+            <TextBox x:Name="AmountBox" TextChanged="OnCurrencyTextChanged"/>
+        </StackPanel>
+
+        <Border Background="#251A45" CornerRadius="6" Padding="10">
+            <StackPanel Spacing="6">
+                <CheckBox x:Name="OverrideCheckBox" Content="Override amount for this specific month only" Foreground="#00FFFF" FontWeight="Bold"/>
+                <TextBlock x:Name="OverrideTargetText" Text="Target Month: " Foreground="#A095C2" FontSize="12"/>
+            </StackPanel>
+        </Border>
+
+        <StackPanel Spacing="3">
+            <TextBlock Text="Effective From Date:" Foreground="#A095C2" FontSize="12"/>
+            <DatePicker x:Name="EffectiveFromDatePicker" HorizontalAlignment="Stretch"/>
+        </StackPanel>
+
+        <StackPanel Spacing="3">
+            <TextBlock Text="Effective To Date (End / Stop Date):" Foreground="#A095C2" FontSize="12"/>
+            <DatePicker x:Name="EffectiveToDatePicker" HorizontalAlignment="Stretch"/>
+        </StackPanel>
+
+        <Grid ColumnDefinitions="*, *" ColumnSpacing="10" Margin="0,10,0,0">
+            <Button Grid.Column="0" Content="Save Changes" Click="OnSaveClicked" Background="#8A2BE2" Foreground="White" FontWeight="Bold" HorizontalAlignment="Stretch" Height="38"/>
+            <Button Grid.Column="1" Content="Delete Record" Click="OnDeleteClicked" Background="#FF4500" Foreground="White" FontWeight="Bold" HorizontalAlignment="Stretch" Height="38"/>
+        </Grid>
+    </StackPanel>
+</Window>

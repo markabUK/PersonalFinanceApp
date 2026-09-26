@@ -1,0 +1,47 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="PersonalFinanceApp.Desktop.Views.AddTransactionWindow"
+        Title="Add Transaction / Direct Debit" Width="480" Height="540"
+        Background="#0F0C1B" Foreground="White" WindowStartupLocation="CenterOwner">
+
+    <StackPanel Margin="20" Spacing="12">
+        <TextBlock Text="New Financial Entry" FontSize="20" FontWeight="Bold" Foreground="#00FF7F"/>
+
+        <StackPanel Spacing="3">
+            <TextBlock Text="Title (e.g. Netflix, Salary, Direct Debit):" Foreground="#A095C2" FontSize="12"/>
+            <TextBox x:Name="TitleBox"/>
+        </StackPanel>
+
+        <StackPanel Spacing="3">
+            <TextBlock Text="Amount (£):" Foreground="#A095C2" FontSize="12"/>
+            <TextBox x:Name="AmountBox" TextChanged="OnCurrencyTextChanged"/>
+        </StackPanel>
+
+        <StackPanel Spacing="3">
+            <TextBlock Text="Transaction Type:" Foreground="#A095C2" FontSize="12"/>
+            <ComboBox x:Name="TypeBox" HorizontalAlignment="Stretch"/>
+        </StackPanel>
+
+        <StackPanel Spacing="3">
+            <TextBlock Text="Recurrence Frequency:" Foreground="#A095C2" FontSize="12"/>
+            <ComboBox x:Name="RecurrenceBox" HorizontalAlignment="Stretch"/>
+        </StackPanel>
+
+        <StackPanel Spacing="3">
+            <TextBlock Text="Interval (e.g., 2 for every 2 weeks):" Foreground="#A095C2" FontSize="12"/>
+            <TextBox x:Name="IntervalBox" Text="1"/>
+        </StackPanel>
+
+        <StackPanel Spacing="3">
+            <TextBlock Text="Effective From Date:" Foreground="#A095C2" FontSize="12"/>
+            <DatePicker x:Name="EffectiveFromDatePicker" HorizontalAlignment="Stretch"/>
+        </StackPanel>
+
+        <StackPanel Spacing="3">
+            <TextBlock Text="Effective To Date (Optional end date):" Foreground="#A095C2" FontSize="12"/>
+            <DatePicker x:Name="EffectiveToDatePicker" HorizontalAlignment="Stretch"/>
+        </StackPanel>
+
+        <Button Content="Save Entry" Click="OnSaveClicked" Background="#8A2BE2" Foreground="White" FontWeight="Bold" HorizontalAlignment="Stretch" Height="38" Margin="0,10,0,0"/>
+    </StackPanel>
+</Window>
